@@ -155,47 +155,47 @@ jobs:
         cd ..
 
 
-    - name: Get refind
-      if: matrix.arch == 'x86'
-      run: sudo wget -nv -O refind-bin-0.14.2.zip https://nchc.dl.sourceforge.net/project/refind/0.14.2/refind-bin-0.14.2.zip
-
-    - name: Create install-image-${{ env.LATEST_VERSION }}.img
-      if: matrix.arch == 'x86'
-      run: |
-        sudo modprobe nbd
-        sudo apt-get install -y qemu-utils extlinux > /dev/null
-        truncate --size 128M install-image-$LATEST_VERSION.img
-        sudo qemu-nbd -c /dev/nbd0 -f raw install-image-$LATEST_VERSION.img
-        sudo mkfs.vfat -n "Install" /dev/nbd0
-        sudo mkdir ./install
-        sudo mount /dev/nbd0 ./install
-        sudo mkdir -p ./install/EFI/BOOT
-        sudo unzip refind-bin-0.14.2.zip refind-bin-0.14.2/refind/refind_x64.efi
-        sudo cp refind-bin-0.14.2/refind/refind_x64.efi ./install/EFI/BOOT/BOOTX64.EFI
-        sudo rm -rf refind-bin-0.14.2
-        echo -e 'timeout 0\ntextonly\ntextmode 0\nshowtools shutdown, reboot, exit\nmenuentry "Install RouterOS" {\n\tloader /linux\n\toptions "load_ramdisk=1 root=/dev/ram0 -install -hdd"\n}\ndefault_selection /EFI/BOOT/BOOTX64.EFI' \
-          > refind.conf
-        sudo cp refind.conf ./install/EFI/BOOT/
-        sudo rm refind.conf
-        sudo extlinux --install -H 64 -S 32 ./install/
-        echo -e 'default system\nLABEL system\n\tKERNEL linux\n\tAPPEND load_ramdisk=1 -install -hdd' \
-          > syslinux.cfg
-        sudo cp syslinux.cfg ./install/
-        sudo rm syslinux.cfg
-        sudo cp ./BOOTX64.EFI ./install/linux
-        NPK_FILES=($(find ./all_packages/*.npk))
-        for ((i=1; i<=${#NPK_FILES[@]}; i++))
-        do
-          echo "${NPK_FILES[$i-1]}=>$i.npk" 
-          sudo cp ${NPK_FILES[$i-1]} ./install/$i.npk
-        done
-        sudo touch ./install/CHOOSE
-        sudo touch ./install/autorun.scr 
-        sudo umount /dev/nbd0
-        sudo qemu-nbd -d /dev/nbd0
-        sudo rm -rf ./install
-        sudo zip install-image-$LATEST_VERSION.zip ./install-image-$LATEST_VERSION.img
-        sudo rm ./install-image-$LATEST_VERSION.img
+#    - name: Get refind
+#      if: matrix.arch == 'x86'
+#      run: sudo wget -nv -O refind-bin-0.14.2.zip https://nchc.dl.sourceforge.net/project/refind/0.14.2/refind-bin-0.14.2.zip
+#
+#    - name: Create install-image-${{ env.LATEST_VERSION }}.img
+#      if: matrix.arch == 'x86'
+#      run: |
+#        sudo modprobe nbd
+#        sudo apt-get install -y qemu-utils extlinux > /dev/null
+#        truncate --size 128M install-image-$LATEST_VERSION.img
+#        sudo qemu-nbd -c /dev/nbd0 -f raw install-image-$LATEST_VERSION.img
+#        sudo mkfs.vfat -n "Install" /dev/nbd0
+#        sudo mkdir ./install
+#        sudo mount /dev/nbd0 ./install
+#        sudo mkdir -p ./install/EFI/BOOT
+#        sudo unzip refind-bin-0.14.2.zip refind-bin-0.14.2/refind/refind_x64.efi
+#        sudo cp refind-bin-0.14.2/refind/refind_x64.efi ./install/EFI/BOOT/BOOTX64.EFI
+#        sudo rm -rf refind-bin-0.14.2
+#        echo -e 'timeout 0\ntextonly\ntextmode 0\nshowtools shutdown, reboot, exit\nmenuentry "Install RouterOS" {\n\tloader /linux\n\toptions "load_ramdisk=1 root=/dev/ram0 -install -hdd"\n}\ndefault_selection /EFI/BOOT/BOOTX64.EFI' \
+#          > refind.conf
+#        sudo cp refind.conf ./install/EFI/BOOT/
+#        sudo rm refind.conf
+#        sudo extlinux --install -H 64 -S 32 ./install/
+#        echo -e 'default system\nLABEL system\n\tKERNEL linux\n\tAPPEND load_ramdisk=1 -install -hdd' \
+#          > syslinux.cfg
+#        sudo cp syslinux.cfg ./install/
+#        sudo rm syslinux.cfg
+#        sudo cp ./BOOTX64.EFI ./install/linux
+#        NPK_FILES=($(find ./all_packages/*.npk))
+#        for ((i=1; i<=${#NPK_FILES[@]}; i++))
+#        do
+#          echo "${NPK_FILES[$i-1]}=>$i.npk"
+#          sudo cp ${NPK_FILES[$i-1]} ./install/$i.npk
+#        done
+#        sudo touch ./install/CHOOSE
+#        sudo touch ./install/autorun.scr
+#        sudo umount /dev/nbd0
+#        sudo qemu-nbd -d /dev/nbd0
+#        sudo rm -rf ./install
+#        sudo zip install-image-$LATEST_VERSION.zip ./install-image-$LATEST_VERSION.img
+#        sudo rm ./install-image-$LATEST_VERSION.img
 
     - name: Get chr-${{ env.LATEST_VERSION }}${{ env.ARCH }}.img
       if: matrix.arch == 'arm64'
