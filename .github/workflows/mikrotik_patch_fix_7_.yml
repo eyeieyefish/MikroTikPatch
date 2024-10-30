@@ -24,7 +24,6 @@ env:
   CUSTOM_RENEW_URL: ${{ secrets.CUSTOM_RENEW_URL }}
   MIKRO_CLOUD_URL: ${{ secrets.MIKRO_CLOUD_URL }}
   CUSTOM_CLOUD_URL: ${{ secrets.CUSTOM_CLOUD_URL }}
-  ROS_VERSION: ${{ secrets.ROS_VERSION }}
 
 jobs:
   Set_BuildTime:
@@ -61,7 +60,7 @@ jobs:
       id: get_latest
       run: |
         echo $(uname -a)
-        LATEST_VERSION=${{ secrets.ROS_VERSION }}
+        LATEST_VERSION='7.16.1'
         echo Latest Version:$LATEST_VERSION
         BUILD_TIME=${{ needs.Set_BuildTime.outputs.BUILD_TIME }}
         echo Build Time:$BUILD_TIME
