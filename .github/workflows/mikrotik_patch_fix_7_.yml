@@ -74,22 +74,21 @@ jobs:
           echo "ARCH=$ARCH" >> $GITHUB_ENV
         fi
 
-    - name: Get netinstall ${{ env.LATEST_VERSION }}
-      if: matrix.arch == 'x86'
-      run: |
-        sudo wget -nv -O netinstall.zip https://download.mikrotik.com/routeros/$LATEST_VERSION/netinstall-$LATEST_VERSION.zip
-        sudo wget -nv -O netinstall.tar.gz https://download.mikrotik.com/routeros/$LATEST_VERSION/netinstall-$LATEST_VERSION.tar.gz
-
-    - name: Patch netinstall ${{ env.LATEST_VERSION }}
-      if: matrix.arch == 'x86'
-      run: |
-        sudo unzip netinstall.zip
-        sudo -E python3 patch.py netinstall netinstall.exe
-        sudo zip netinstall-$LATEST_VERSION.zip ./netinstall.exe
-        sudo tar -xvf netinstall.tar.gz
-        sudo -E python3 patch.py netinstall netinstall-cli
-        sudo tar -czvf netinstall-$LATEST_VERSION.tar.gz ./netinstall-cli
-
+#    - name: Get netinstall ${{ env.LATEST_VERSION }}
+#      if: matrix.arch == 'x86'
+#      run: |
+#        sudo wget -nv -O netinstall.zip https://download.mikrotik.com/routeros/$LATEST_VERSION/netinstall-$LATEST_VERSION.zip
+#        sudo wget -nv -O netinstall.tar.gz https://download.mikrotik.com/routeros/$LATEST_VERSION/netinstall-$LATEST_VERSION.tar.gz
+#
+#    - name: Patch netinstall ${{ env.LATEST_VERSION }}
+#      if: matrix.arch == 'x86'
+#      run: |
+#        sudo unzip netinstall.zip
+#        sudo -E python3 patch.py netinstall netinstall.exe
+#        sudo zip netinstall-$LATEST_VERSION.zip ./netinstall.exe
+#        sudo tar -xvf netinstall.tar.gz
+#        sudo -E python3 patch.py netinstall netinstall-cli
+#        sudo tar -czvf netinstall-$LATEST_VERSION.tar.gz ./netinstall-cli
 
     - name: Get mikrotik-${{ env.LATEST_VERSION }}${{ env.ARCH }}.iso
       run: |
@@ -304,6 +303,5 @@ jobs:
           netinstall-${{ env.LATEST_VERSION }}.*
           install-image-${{ env.LATEST_VERSION }}.zip
           routeros-${{ env.LATEST_VERSION }}${{ env.ARCH }}.npk
-          option-${{ env.LATEST_VERSION }}${{ env.ARCH }}.npk
           all_packages-*-${{ env.LATEST_VERSION }}.zip
           *.EFI
