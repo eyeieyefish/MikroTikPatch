@@ -1,4 +1,4 @@
-name: Patch Mikrotik RouterOS 7.x with fix version
+name: Patch ARM Mikrotik RouterOS 7.x with fix version
 on:
   # push:
   #   branches: [ "main" ]
