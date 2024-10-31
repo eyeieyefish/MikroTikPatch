@@ -81,13 +81,13 @@ jobs:
     - name: Get mikrotik ${{ env.LATEST_VERSION }} arm32 npk
       if: matrix.arch == 'arm32'
       run: |
-          sudo wget -nv -O mikrotik-arm.npk https://download.mikrotik.com/routeros/$LATEST_VERSION/mikrotik-$LATEST_VERSION$ARCH.npk
+          sudo wget -nv -O routeros-arm32.npk https://download.mikrotik.com/routeros/$LATEST_VERSION/routeros-$LATEST_VERSION$ARCH.npk
 
     - name: Patch mikrotik ${{ env.LATEST_VERSION }} arm32 npk
       if: matrix.arch == 'arm32'
       run: |
-        sudo -E python3 patch.py npk mikrotik-arm.npk
-        sudo mv mikrotik-arm.npk mikrotik-$LATEST_VERSION$ARCH.npk
+        sudo -E python3 patch.py npk routeros-arm32.npk
+        sudo mv routeros-arm32.npk routeros-$LATEST_VERSION$ARCH.npk
 
     - name: Delete Release tag ${{ env.LATEST_VERSION }} ${{ matrix.arch }}
       run: |
@@ -112,4 +112,4 @@ jobs:
         tag_name: ${{ env.LATEST_VERSION }}${{ env.ARCH }}
         make_latest:  ${{ matrix.channel == 'stable'}} && ${{ matrix.arch == 'x86'}}
         files: |
-          mikrotik-${{ env.LATEST_VERSION }}${{ env.ARCH }}.npk
+          routeros-${{ env.LATEST_VERSION }}${{ env.ARCH }}.npk
