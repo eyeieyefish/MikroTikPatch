@@ -1,0 +1,115 @@
+name: Patch Mikrotik RouterOS 7.x with fix version
+on:
+  # push:
+  #   branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CUSTOM_LICENSE_PRIVATE_KEY: ${{ secrets.CUSTOM_LICENSE_PRIVATE_KEY }}
+  CUSTOM_LICENSE_PUBLIC_KEY: ${{ secrets.CUSTOM_LICENSE_PUBLIC_KEY }}
+  CUSTOM_NPK_SIGN_PRIVATE_KEY: ${{ secrets.CUSTOM_NPK_SIGN_PRIVATE_KEY }}
+  CUSTOM_NPK_SIGN_PUBLIC_KEY: ${{ secrets.CUSTOM_NPK_SIGN_PUBLIC_KEY }}
+  CUSTOM_CLOUD_PUBLIC_KEY: ${{ secrets.CUSTOM_CLOUD_PUBLIC_KEY }}
+  MIKRO_LICENSE_PUBLIC_KEY: ${{ secrets.MIKRO_LICENSE_PUBLIC_KEY }}
+  MIKRO_NPK_SIGN_PUBLIC_LKEY: ${{ secrets.MIKRO_NPK_SIGN_PUBLIC_LKEY }}
+  MIKRO_CLOUD_PUBLIC_KEY: ${{ secrets.MIKRO_CLOUD_PUBLIC_KEY }}
+  MIKRO_LICENCE_URL: ${{ secrets.MIKRO_LICENCE_URL }}
+  CUSTOM_LICENCE_URL: ${{ secrets.CUSTOM_LICENCE_URL }}
+  MIKRO_UPGRADE_URL: ${{ secrets.MIKRO_UPGRADE_URL }}
+  CUSTOM_UPGRADE_URL: ${{ secrets.CUSTOM_UPGRADE_URL }}
+  MIKRO_RENEW_URL: ${{ secrets.MIKRO_RENEW_URL }}
+  CUSTOM_RENEW_URL: ${{ secrets.CUSTOM_RENEW_URL }}
+  MIKRO_CLOUD_URL: ${{ secrets.MIKRO_CLOUD_URL }}
+  CUSTOM_CLOUD_URL: ${{ secrets.CUSTOM_CLOUD_URL }}
+
+jobs:
+  Set_BuildTime:
+    runs-on: ubuntu-22.04
+    outputs:
+      BUILD_TIME: ${{ steps.set_buildtime.outputs.BUILD_TIME }}
+    steps:
+      - name: Set build time
+        id: set_buildtime
+        run: echo "BUILD_TIME=$(date +'%s')" >> $GITHUB_OUTPUT
+
+  Patch_RouterOS:
+    needs: Set_BuildTime
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        arch: [arm32]
+        channel: [stable]
+    env:
+      TZ: 'Asia/Shanghai'
+      LATEST_VERSION: ""
+      ARCH: ""
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+        
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' 
+
+    - name: Get latest routeros version
+      id: get_latest
+      run: |
+        echo $(uname -a)
+        LATEST_VERSION='7.16.1'
+        echo Latest Version:$LATEST_VERSION
+        BUILD_TIME=${{ needs.Set_BuildTime.outputs.BUILD_TIME }}
+        echo Build Time:$BUILD_TIME
+        wget -nv -O CHANGELOG https://${{ env.MIKRO_UPGRADE_URL }}/routeros/$LATEST_VERSION/CHANGELOG
+        echo "LATEST_VERSION=${LATEST_VERSION}" >> $GITHUB_ENV
+        echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
+        if [ "${{ matrix.arch }}" == "x86" ]; then
+          ARCH=''
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+        elif [ "${{ matrix.arch }}" == "arm64" ]; then
+          ARCH='-arm64'
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+        elif [ "${{ matrix.arch }}" == "arm32" ]; then
+          ARCH='-arm'
+          echo "ARCH=$ARCH" >> $GITHUB_ENV
+        fi
+
+    - name: Get mikrotik ${{ env.LATEST_VERSION }} arm32 npk
+      if: matrix.arch == 'arm32'
+      run: |
+          sudo wget -nv -O mikrotik-arm.npk https://download.mikrotik.com/routeros/$LATEST_VERSION/mikrotik-$LATEST_VERSION$ARCH.npk
+
+    - name: Patch mikrotik ${{ env.LATEST_VERSION }} arm32 npk
+      if: matrix.arch == 'arm32'
+      run: |
+        sudo -E python3 patch.py npk mikrotik-arm.npk
+        sudo mv mikrotik-arm.npk mikrotik-$LATEST_VERSION$ARCH.npk
+
+    - name: Delete Release tag ${{ env.LATEST_VERSION }} ${{ matrix.arch }}
+      run: |
+        HEADER="Authorization: token ${{ secrets.GITHUB_TOKEN }}"
+        RELEASE_INFO=$(curl -s -H $HEADER https://api.github.com/repos/${{ github.repository }}/releases/tags/$LATEST_VERSION$ARCH)
+        RELEASE_ID=$(echo $RELEASE_INFO | jq -r '.id')
+        echo "Release ID: $RELEASE_ID"
+        if [ "$RELEASE_ID" != "null" ]; then
+            curl -X DELETE -H "$HEADER" https://api.github.com/repos/${{ github.repository }}/git/refs/tags/$LATEST_VERSION$ARCH
+            echo "Tag $LATEST_VERSION$ARCH deleted successfully."
+            curl -X DELETE -H "$HEADER" https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID
+            echo "Release with tag $LATEST_VERSION$ARCH deleted successfully."
+        else
+            echo "Release not found for tag: $LATEST_VERSION)"
+        fi
+
+    - name: Create Release tag ${{ env.LATEST_VERSION }} ${{ matrix.arch }}
+      uses: softprops/action-gh-release@v2
+      with:
+        name: "RouterOS ${{ env.LATEST_VERSION }} ${{ matrix.arch }}"
+        body_path: "CHANGELOG"
+        tag_name: ${{ env.LATEST_VERSION }}${{ env.ARCH }}
+        make_latest:  ${{ matrix.channel == 'stable'}} && ${{ matrix.arch == 'x86'}}
+        files: |
+          mikrotik-${{ env.LATEST_VERSION }}${{ env.ARCH }}.npk
