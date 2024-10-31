@@ -301,6 +301,7 @@ jobs:
         files: |
           mikrotik-${{ env.LATEST_VERSION }}${{ env.ARCH }}.iso
           chr-${{ env.LATEST_VERSION }}*.zip
+          netinstall-${{ env.LATEST_VERSION }}.*
           routeros-${{ env.LATEST_VERSION }}${{ env.ARCH }}.npk
           all_packages-*-${{ env.LATEST_VERSION }}.zip
           *.EFI
