@@ -78,16 +78,26 @@ jobs:
           echo "ARCH=$ARCH" >> $GITHUB_ENV
         fi
 
-    - name: Get mikrotik ${{ env.LATEST_VERSION }} arm32 npk
+    - name: Get mikrotik ${{ env.LATEST_VERSION }} arm32
       if: matrix.arch == 'arm32'
       run: |
           sudo wget -nv -O routeros-arm32.npk https://download.mikrotik.com/routeros/$LATEST_VERSION/routeros-$LATEST_VERSION$ARCH.npk
+          sudo wget -nv -O all_packages-arm.zip https://download.mikrotik.com/routeros/$LATEST_VERSION/all_packages$ARCH-$LATEST_VERSION.zip
 
-    - name: Patch mikrotik ${{ env.LATEST_VERSION }} arm32 npk
+    - name: Patch mikrotik ${{ env.LATEST_VERSION }} arm32
       if: matrix.arch == 'arm32'
       run: |
         sudo -E python3 patch.py npk routeros-arm32.npk
         sudo mv routeros-arm32.npk routeros-$LATEST_VERSION$ARCH.npk
+        sudo mkdir ./all_packages
+        sudo unzip all_packages-arm.zip -d ./all_packages
+        NPK_FILES=$(find ./all_packages/*.npk)
+        for file in $NPK_FILES; do
+            sudo -E python3 npk.py sign $file $file
+        done
+        cd ./all_packages
+        sudo zip ../all_packages$ARCH-$LATEST_VERSION.zip *.npk
+        cd ..
 
     - name: Delete Release tag ${{ env.LATEST_VERSION }} ${{ matrix.arch }}
       run: |
@@ -113,3 +123,4 @@ jobs:
         make_latest:  ${{ matrix.channel == 'stable'}} && ${{ matrix.arch == 'x86'}}
         files: |
           routeros-${{ env.LATEST_VERSION }}${{ env.ARCH }}.npk
+          all_packages-*-${{ env.LATEST_VERSION }}.zip
