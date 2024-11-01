@@ -60,7 +60,7 @@ jobs:
       id: get_latest
       run: |
         echo $(uname -a)
-        LATEST_VERSION='7.16.1'
+        LATEST_VERSION='7.15.3'
         echo Latest Version:$LATEST_VERSION
         BUILD_TIME=${{ needs.Set_BuildTime.outputs.BUILD_TIME }}
         echo Build Time:$BUILD_TIME
@@ -95,6 +95,7 @@ jobs:
         for file in $NPK_FILES; do
             sudo -E python3 npk.py sign $file $file
         done
+        sudo cp routeros-$LATEST_VERSION$ARCH.npk ./all_packages
         cd ./all_packages
         sudo zip ../all_packages$ARCH-$LATEST_VERSION.zip *.npk
         cd ..

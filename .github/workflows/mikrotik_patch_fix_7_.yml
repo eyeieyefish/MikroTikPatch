@@ -60,7 +60,7 @@ jobs:
       id: get_latest
       run: |
         echo $(uname -a)
-        LATEST_VERSION='7.16.1'
+        LATEST_VERSION='7.15.3'
         echo Latest Version:$LATEST_VERSION
         BUILD_TIME=${{ needs.Set_BuildTime.outputs.BUILD_TIME }}
         echo Build Time:$BUILD_TIME
